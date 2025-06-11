@@ -4,9 +4,9 @@ import { FinancialStep } from "@/types/financial";
 export const FINANCIAL_STEPS: FinancialStep[] = [
   {
     id: 1,
-    title: "Menabung $1,000",
-    description: "Langkah pertama untuk memulai perjalanan finansial yang sehat. Targetkan menabung $1,000 sebagai buffer awal.",
-    target: 1000,
+    title: "Menabung Rp 15.000.000",
+    description: "Langkah pertama untuk memulai perjalanan finansial yang sehat. Targetkan menabung Rp 15.000.000 sebagai buffer awal.",
+    target: 15000000,
     current: 0,
     completed: false,
     icon: "💰",

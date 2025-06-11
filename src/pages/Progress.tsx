@@ -1,4 +1,3 @@
-
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { FINANCIAL_STEPS } from "@/data/financialSteps";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +40,7 @@ const ProgressPage = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
   };

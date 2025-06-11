@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,7 +78,7 @@ const Profile = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -226,7 +225,7 @@ const Profile = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="income">Pendapatan Bulanan ($)</Label>
+              <Label htmlFor="income">Pendapatan Bulanan (Rp)</Label>
               <Input
                 id="income"
                 type="number"
@@ -236,7 +235,7 @@ const Profile = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expenses">Pengeluaran Bulanan ($)</Label>
+              <Label htmlFor="expenses">Pengeluaran Bulanan (Rp)</Label>
               <Input
                 id="expenses"
                 type="number"
@@ -246,7 +245,7 @@ const Profile = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="savings">Tabungan Saat Ini ($)</Label>
+              <Label htmlFor="savings">Tabungan Saat Ini (Rp)</Label>
               <Input
                 id="savings"
                 type="number"

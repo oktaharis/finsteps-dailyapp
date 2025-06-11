@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FINANCIAL_STEPS } from "@/data/financialSteps";
@@ -95,7 +94,7 @@ const StepDetail = () => {
     const num = parseFloat(amount) || 0;
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(num);
   };
@@ -180,7 +179,7 @@ const StepDetail = () => {
           {step.target !== undefined && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="current">Jumlah Saat Ini ($)</Label>
+                <Label htmlFor="current">Jumlah Saat Ini (Rp)</Label>
                 <Input
                   id="current"
                   type="number"
@@ -190,7 +189,7 @@ const StepDetail = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="target">Target ($)</Label>
+                <Label htmlFor="target">Target (Rp)</Label>
                 <Input
                   id="target"
                   type="number"
