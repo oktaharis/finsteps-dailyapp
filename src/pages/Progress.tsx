@@ -1,24 +1,41 @@
 
-import { useState } from "react";
+import { useUserProgress } from "@/hooks/useUserProgress";
 import { FINANCIAL_STEPS } from "@/data/financialSteps";
-import { FinancialStep } from "@/types/financial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Calendar, DollarSign } from "lucide-react";
+import { TrendingUp, Calendar, DollarSign, Loader2 } from "lucide-react";
+import { useMemo } from "react";
 
 const ProgressPage = () => {
-  const [steps] = useState<FinancialStep[]>(FINANCIAL_STEPS);
+  const { progress, loading } = useUserProgress();
 
-  const completedSteps = steps.filter(step => step.completed).length;
-  const progressPercentage = (completedSteps / steps.length) * 100;
+  const stepsWithProgress = useMemo(() => {
+    return FINANCIAL_STEPS.map(step => {
+      const userProgress = progress.find(p => p.step_id === step.id);
+      return {
+        ...step,
+        current: userProgress?.current_amount || 0,
+        target: userProgress?.target_amount || step.target || 0,
+        completed: userProgress?.completed || false,
+        notes: userProgress?.notes || step.notes,
+      };
+    });
+  }, [progress]);
 
-  const totalSavings = steps.reduce((sum, step) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const completedSteps = stepsWithProgress.filter(step => step.completed).length;
+  const progressPercentage = (completedSteps / stepsWithProgress.length) * 100;
+
+  const totalSavings = stepsWithProgress.reduce((sum, step) => {
     return sum + (step.current || 0);
-  }, 0);
-
-  const totalTargets = steps.reduce((sum, step) => {
-    return sum + (step.target || 0);
   }, 0);
 
   const formatCurrency = (amount: number) => {
@@ -29,7 +46,7 @@ const ProgressPage = () => {
     }).format(amount);
   };
 
-  const getStepProgress = (step: FinancialStep) => {
+  const getStepProgress = (step: any) => {
     if (step.completed) return 100;
     if (!step.target || !step.current) return 0;
     return Math.min((step.current / step.target) * 100, 100);
@@ -76,7 +93,7 @@ const ProgressPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Langkah Selesai</p>
-                <p className="text-2xl font-bold">{completedSteps}/{steps.length}</p>
+                <p className="text-2xl font-bold">{completedSteps}/{stepsWithProgress.length}</p>
               </div>
               <Calendar className="h-8 w-8 text-financial-progress" />
             </div>
@@ -90,7 +107,7 @@ const ProgressPage = () => {
           <CardTitle>Progress Detail per Langkah</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {steps.map((step) => (
+          {stepsWithProgress.map((step) => (
             <div key={step.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -121,20 +138,6 @@ const ProgressPage = () => {
               )}
             </div>
           ))}
-        </CardContent>
-      </Card>
-
-      {/* Monthly Progress Chart Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Grafik Progress Bulanan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 bg-accent/20 rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">
-              Grafik progress akan ditampilkan di sini setelah terintegrasi dengan database
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

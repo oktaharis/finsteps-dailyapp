@@ -1,19 +1,43 @@
 
-import { useState } from "react";
+import { useUserProgress } from "@/hooks/useUserProgress";
+import { useProfile } from "@/hooks/useProfile";
 import { FINANCIAL_STEPS } from "@/data/financialSteps";
 import { FinancialStep } from "@/types/financial";
 import StepCard from "@/components/StepCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, Target, CheckCircle, Clock } from "lucide-react";
+import { TrendingUp, Target, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 
 const Dashboard = () => {
-  const [steps] = useState<FinancialStep[]>(FINANCIAL_STEPS);
   const navigate = useNavigate();
+  const { progress, loading: progressLoading } = useUserProgress();
+  const { profile, loading: profileLoading } = useProfile();
 
-  const completedSteps = steps.filter(step => step.completed).length;
-  const progressPercentage = (completedSteps / steps.length) * 100;
+  const stepsWithProgress = useMemo(() => {
+    return FINANCIAL_STEPS.map(step => {
+      const userProgress = progress.find(p => p.step_id === step.id);
+      return {
+        ...step,
+        current: userProgress?.current_amount || 0,
+        target: userProgress?.target_amount || step.target || 0,
+        completed: userProgress?.completed || false,
+        notes: userProgress?.notes || step.notes,
+      };
+    });
+  }, [progress]);
+
+  if (progressLoading || profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const completedSteps = stepsWithProgress.filter(step => step.completed).length;
+  const progressPercentage = (completedSteps / stepsWithProgress.length) * 100;
 
   const handleStepClick = (step: FinancialStep) => {
     navigate(`/step/${step.id}`);
@@ -22,7 +46,7 @@ const Dashboard = () => {
   const stats = [
     {
       title: "Total Progress",
-      value: `${completedSteps}/${steps.length}`,
+      value: `${completedSteps}/${stepsWithProgress.length}`,
       icon: Target,
       color: "text-primary"
     },
@@ -34,7 +58,7 @@ const Dashboard = () => {
     },
     {
       title: "Langkah Tersisa",
-      value: steps.length - completedSteps,
+      value: stepsWithProgress.length - completedSteps,
       icon: Clock,
       color: "text-financial-warning"
     }
@@ -48,6 +72,7 @@ const Dashboard = () => {
           Financial Staircase Tracker
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          {profile?.name ? `Welcome back, ${profile.name}! ` : ''}
           Pantau perjalanan finansial Anda melalui 7 langkah menuju kebebasan finansial
         </p>
       </div>
@@ -67,7 +92,7 @@ const Dashboard = () => {
           </div>
           <Progress value={progressPercentage} className="h-3 bg-white/20" />
           <p className="text-white/90 text-sm">
-            Anda telah menyelesaikan {completedSteps} dari {steps.length} langkah menuju kebebasan finansial!
+            Anda telah menyelesaikan {completedSteps} dari {stepsWithProgress.length} langkah menuju kebebasan finansial!
           </p>
         </CardContent>
       </Card>
@@ -95,7 +120,7 @@ const Dashboard = () => {
       <div className="space-y-6">
         <h2 className="text-2xl font-semibold text-center">7 Langkah Keuangan</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {steps.map((step, index) => (
+          {stepsWithProgress.map((step, index) => (
             <div
               key={step.id}
               className="animate-fade-in"

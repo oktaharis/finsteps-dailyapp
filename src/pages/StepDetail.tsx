@@ -2,61 +2,86 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FINANCIAL_STEPS } from "@/data/financialSteps";
-import { FinancialStep } from "@/types/financial";
+import { useUserProgress } from "@/hooks/useUserProgress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Save, CheckCircle } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const StepDetail = () => {
   const { stepId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [step, setStep] = useState<FinancialStep | null>(null);
+  const { getStepProgress, updateStepProgress, loading } = useUserProgress();
+  
   const [currentAmount, setCurrentAmount] = useState<string>("");
   const [targetAmount, setTargetAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [saving, setSaving] = useState(false);
+
+  const step = FINANCIAL_STEPS.find(s => s.id === Number(stepId));
+  const userProgress = getStepProgress(Number(stepId));
 
   useEffect(() => {
-    const foundStep = FINANCIAL_STEPS.find(s => s.id === Number(stepId));
-    if (foundStep) {
-      setStep(foundStep);
-      setCurrentAmount((foundStep.current || 0).toString());
-      setTargetAmount((foundStep.target || 0).toString());
-      setNotes(foundStep.notes || "");
-      setIsCompleted(foundStep.completed);
+    if (userProgress) {
+      setCurrentAmount(userProgress.current_amount.toString());
+      setTargetAmount(userProgress.target_amount.toString());
+      setNotes(userProgress.notes || "");
+      setIsCompleted(userProgress.completed);
+    } else if (step) {
+      setCurrentAmount("0");
+      setTargetAmount((step.target || 0).toString());
+      setNotes(step.notes || "");
+      setIsCompleted(false);
     }
-  }, [stepId]);
+  }, [userProgress, step]);
 
-  const handleSave = () => {
-    // Simulate saving to database
-    console.log("Saving step data:", {
-      stepId,
-      currentAmount,
-      targetAmount,
-      notes,
-      isCompleted
+  const handleSave = async () => {
+    if (!step) return;
+    
+    setSaving(true);
+    const success = await updateStepProgress(step.id, {
+      current_amount: parseFloat(currentAmount) || 0,
+      target_amount: parseFloat(targetAmount) || 0,
+      notes: notes,
+      completed: isCompleted,
     });
 
-    toast({
-      title: "Tersimpan!",
-      description: "Progress Anda telah berhasil disimpan.",
-    });
+    if (success) {
+      toast({
+        title: "Tersimpan!",
+        description: "Progress Anda telah berhasil disimpan.",
+      });
+    }
+    setSaving(false);
   };
 
-  const toggleComplete = () => {
-    setIsCompleted(!isCompleted);
-    toast({
-      title: isCompleted ? "Tandai Belum Selesai" : "Selamat! 🎉",
-      description: isCompleted 
-        ? "Langkah ditandai sebagai belum selesai."
-        : "Anda telah menyelesaikan langkah ini!",
+  const toggleComplete = async () => {
+    if (!step) return;
+    
+    const newCompleted = !isCompleted;
+    setIsCompleted(newCompleted);
+    
+    const success = await updateStepProgress(step.id, {
+      current_amount: parseFloat(currentAmount) || 0,
+      target_amount: parseFloat(targetAmount) || 0,
+      notes: notes,
+      completed: newCompleted,
     });
+
+    if (success) {
+      toast({
+        title: newCompleted ? "Selamat! 🎉" : "Tandai Belum Selesai",
+        description: newCompleted 
+          ? "Anda telah menyelesaikan langkah ini!"
+          : "Langkah ditandai sebagai belum selesai.",
+      });
+    }
   };
 
   const getProgressPercentage = () => {
@@ -74,6 +99,14 @@ const StepDetail = () => {
       minimumFractionDigits: 0,
     }).format(num);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   if (!step) {
     return (
@@ -112,6 +145,7 @@ const StepDetail = () => {
               variant={isCompleted ? "secondary" : "default"}
               onClick={toggleComplete}
               className="gap-2"
+              disabled={saving}
             >
               <CheckCircle className="h-4 w-4" />
               {isCompleted ? "Tandai Belum Selesai" : "Tandai Selesai"}
@@ -179,9 +213,9 @@ const StepDetail = () => {
             />
           </div>
 
-          <Button onClick={handleSave} className="w-full gap-2">
-            <Save className="h-4 w-4" />
-            Simpan Progress
+          <Button onClick={handleSave} className="w-full gap-2" disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {saving ? "Menyimpan..." : "Simpan Progress"}
           </Button>
         </CardContent>
       </Card>
